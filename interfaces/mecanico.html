@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MoTracks - Mecánico</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="bg-gray-100 font-sans min-h-screen">
+
+    <nav class="bg-black text-white p-4 shadow-lg">
+        <div class="container mx-auto flex justify-between items-center">
+            <div>
+                <h1 class="text-2xl font-bold tracking-wider text-yellow-500">MOTRACKS</h1>
+                <p class="text-sm text-gray-300">Panel del Mecánico</p>
+            </div>
+            <button
+                id="logout-btn"
+                class="bg-red-500 px-4 py-2 rounded font-bold hover:bg-red-600 transition"
+            >
+                Cerrar sesión
+            </button>
+        </div>
+    </nav>
+
+    <main class="container mx-auto p-6 space-y-6">
+        <div class="bg-white rounded-xl shadow-lg p-6">
+            <h2 class="text-3xl font-bold text-gray-800 mb-2">
+                Bienvenido, <span id="user-name">Cargando...</span>
+            </h2>
+            <p class="text-gray-500">Aquí puedes revisar y actualizar tus órdenes asignadas.</p>
+            <p class="mt-3 text-sm text-gray-600">Correo: <span id="user-email">Cargando...</span></p>
+            <p class="text-sm text-gray-600">Rol: <span id="user-role">Cargando...</span></p>
+        </div>
+
+        <div class="grid md:grid-cols-4 gap-4">
+            <div class="bg-white rounded-xl shadow p-5">
+                <p class="text-sm text-gray-500">Todas</p>
+                <p id="count-all" class="text-3xl font-bold text-gray-800">0</p>
+            </div>
+            <div class="bg-white rounded-xl shadow p-5">
+                <p class="text-sm text-gray-500">Pendientes</p>
+                <p id="count-pending" class="text-3xl font-bold text-gray-800">0</p>
+            </div>
+            <div class="bg-white rounded-xl shadow p-5">
+                <p class="text-sm text-gray-500">En proceso</p>
+                <p id="count-progress" class="text-3xl font-bold text-gray-800">0</p>
+            </div>
+            <div class="bg-white rounded-xl shadow p-5">
+                <p class="text-sm text-gray-500">Finalizadas</p>
+                <p id="count-final" class="text-3xl font-bold text-gray-800">0</p>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-lg p-4">
+            <div class="flex flex-wrap items-center gap-3 justify-between">
+                <div class="flex flex-wrap gap-3">
+                    <button type="button" class="mechanic-tab-btn bg-black text-white px-4 py-2 rounded font-bold" data-tab="todas">
+                        Todas
+                    </button>
+                    <button type="button" class="mechanic-tab-btn bg-gray-200 text-gray-800 px-4 py-2 rounded font-bold" data-tab="pendientes">
+                        Pendientes
+                    </button>
+                    <button type="button" class="mechanic-tab-btn bg-gray-200 text-gray-800 px-4 py-2 rounded font-bold" data-tab="proceso">
+                        En proceso
+                    </button>
+                    <button type="button" class="mechanic-tab-btn bg-gray-200 text-gray-800 px-4 py-2 rounded font-bold" data-tab="finalizadas">
+                        Finalizadas
+                    </button>
+                </div>
+
+                <button
+                    id="reload-appointments-btn"
+                    class="bg-yellow-500 text-black px-4 py-2 rounded font-bold hover:bg-yellow-600 transition"
+                >
+                    Recargar
+                </button>
+            </div>
+        </div>
+
+        <div id="tab-todas" class="mechanic-tab-panel bg-white rounded-xl shadow-lg p-6">
+            <h3 class="text-2xl font-bold text-gray-800 mb-4">Todas las órdenes asignadas</h3>
+            <div id="appointments-list-all" class="space-y-5">
+                <p class="text-gray-500">Cargando citas...</p>
+            </div>
+        </div>
+
+        <div id="tab-pendientes" class="mechanic-tab-panel hidden bg-white rounded-xl shadow-lg p-6">
+            <h3 class="text-2xl font-bold text-gray-800 mb-4">Órdenes pendientes</h3>
+            <div id="appointments-list-pending" class="space-y-5">
+                <p class="text-gray-500">Cargando citas...</p>
+            </div>
+        </div>
+
+        <div id="tab-proceso" class="mechanic-tab-panel hidden bg-white rounded-xl shadow-lg p-6">
+            <h3 class="text-2xl font-bold text-gray-800 mb-4">Órdenes en proceso</h3>
+            <div id="appointments-list-progress" class="space-y-5">
+                <p class="text-gray-500">Cargando citas...</p>
+            </div>
+        </div>
+
+        <div id="tab-finalizadas" class="mechanic-tab-panel hidden bg-white rounded-xl shadow-lg p-6">
+            <h3 class="text-2xl font-bold text-gray-800 mb-4">Órdenes finalizadas</h3>
+            <div id="appointments-list-final" class="space-y-5">
+                <p class="text-gray-500">Cargando citas...</p>
+            </div>
+        </div>
+
+        <p id="message" class="text-center text-sm font-medium"></p>
+    </main>
+
+    <script type="module">
+        import { getCurrentUser, getProfile, getRolePage, logout } from '../js/auth.js';
+        import { listMyAssignedAppointments, updateAppointmentAsMechanic } from '../js/mechanic-data.js';
+
+        const userName = document.getElementById('user-name');
+        const userEmail = document.getElementById('user-email');
+        const userRole = document.getElementById('user-role');
+        const logoutBtn = document.getElementById('logout-btn');
+        const reloadAppointmentsBtn = document.getElementById('reload-appointments-btn');
+        const message = document.getElementById('message');
+
+        const countAll = document.getElementById('count-all');
+        const countPending = document.getElementById('count-pending');
+        const countProgress = document.getElementById('count-progress');
+        const countFinal = document.getElementById('count-final');
+
+        const listAll = document.getElementById('appointments-list-all');
+        const listPending = document.getElementById('appointments-list-pending');
+        const listProgress = document.getElementById('appointments-list-progress');
+        const listFinal = document.getElementById('appointments-list-final');
+
+        let currentSession = null;
+        let allAppointments = [];
+
+        function showMessage(text, colorClass) {
+            message.textContent = text;
+            message.className = `text-center text-sm font-medium ${colorClass}`;
+        }
+
+        function showMechanicTab(tabName) {
+            const panels = document.querySelectorAll('.mechanic-tab-panel');
+            const buttons = document.querySelectorAll('.mechanic-tab-btn');
+
+            panels.forEach(panel => panel.classList.add('hidden'));
+
+            buttons.forEach(button => {
+                button.classList.remove('bg-black', 'text-white');
+                button.classList.add('bg-gray-200', 'text-gray-800');
+            });
+
+            const activePanel = document.getElementById(`tab-${tabName}`);
+            const activeButton = document.querySelector(`.mechanic-tab-btn[data-tab="${tabName}"]`);
+
+            if (activePanel) activePanel.classList.remove('hidden');
+            if (activeButton) {
+                activeButton.classList.remove('bg-gray-200', 'text-gray-800');
+                activeButton.classList.add('bg-black', 'text-white');
+            }
+
+            localStorage.setItem('mechanicActiveTab', tabName);
+        }
+
+        function initMechanicTabs() {
+            const buttons = document.querySelectorAll('.mechanic-tab-btn');
+
+            buttons.forEach(button => {
+                button.addEventListener('click', () => {
+                    showMechanicTab(button.dataset.tab);
+                });
+            });
+
+            const savedTab = localStorage.getItem('mechanicActiveTab') || 'todas';
+            showMechanicTab(savedTab);
+        }
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleString('es-MX', {
+                dateStyle: 'medium',
+                timeStyle: 'short'
+            });
+        }
+
+        function formatStatus(status) {
+            const map = {
+                pendiente: 'Pendiente',
+                confirmada: 'Confirmada',
+                en_proceso: 'En proceso',
+                lista: 'Lista',
+                entregada: 'Entregada',
+                cancelada: 'Cancelada'
+            };
+
+            return map[status] || status;
+        }
+
+        function isPendingStatus(status) {
+            return ['pendiente', 'confirmada'].includes(status);
+        }
+
+        function isProgressStatus(status) {
+            return status === 'en_proceso';
+        }
+
+        function isFinalStatus(status) {
+            return ['lista', 'entregada', 'cancelada'].includes(status);
+        }
+
+        function updateCounters() {
+            countAll.textContent = allAppointments.length;
+            countPending.textContent = allAppointments.filter(a => isPendingStatus(a.estatus)).length;
+            countProgress.textContent = allAppointments.filter(a => isProgressStatus(a.estatus)).length;
+            countFinal.textContent = allAppointments.filter(a => isFinalStatus(a.estatus)).length;
+        }
+
+        function buildAppointmentCard(appointment) {
+            const moto = appointment.motorcycles;
+            const services = appointment.appointment_services || [];
+            const logs = [...(appointment.appointment_logs || [])].sort((a, b) => {
+                return new Date(b.created_at) - new Date(a.created_at);
+            });
+
+            const brand = moto?.motorcycle_brands?.nombre ?? '';
+            const model = moto?.motorcycle_models?.nombre ?? '';
+            const version = moto?.motorcycle_versions
+                ? `${moto.motorcycle_versions.anio} - ${moto.motorcycle_versions.cilindrada}cc`
+                : '';
+            const color = moto?.colors?.nombre ?? 'Sin color';
+
+            return `
+                <div class="border rounded-xl p-5">
+                    <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4 mb-4">
+                        <div>
+                            <p class="text-xl font-bold text-gray-800">${brand} ${model}</p>
+                            <p class="text-sm text-gray-600">
+                                ${version} | ${color} | ${moto?.placas ?? 'Sin placas'}
+                            </p>
+                            <p class="text-sm text-gray-600 mt-1">
+                                Fecha programada: ${formatDate(appointment.fecha_programada)}
+                            </p>
+                        </div>
+
+                        <span class="inline-block bg-blue-100 text-blue-800 px-3 py-1 rounded text-sm w-fit">
+                            ${formatStatus(appointment.estatus)}
+                        </span>
+                    </div>
+
+                    <div class="mb-4">
+                        <p class="font-semibold text-gray-700 mb-1">Servicios:</p>
+                        ${
+                            services.length > 0
+                                ? `<ul class="list-disc ml-5 text-sm text-gray-600">
+                                    ${services.map(item => `
+                                        <li>
+                                            ${item.service_catalog?.nombre ?? 'Servicio'} x${item.cantidad}
+                                        </li>
+                                    `).join('')}
+                                   </ul>`
+                                : `<p class="text-sm text-gray-500">Sin servicios asociados.</p>`
+                        }
+                    </div>
+
+                    <div class="mb-4 text-sm text-gray-600">
+                        <p><span class="font-semibold">Observaciones del cliente:</span> ${appointment.observaciones_cliente ?? 'Sin observaciones'}</p>
+                    </div>
+
+                    <form class="mechanic-update-form space-y-4" data-appointment-id="${appointment.id}">
+                        <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Estatus</label>
+                                <select name="estatus" class="w-full border rounded px-4 py-2" required>
+                                    <option value="pendiente" ${appointment.estatus === 'pendiente' ? 'selected' : ''}>Pendiente</option>
+                                    <option value="confirmada" ${appointment.estatus === 'confirmada' ? 'selected' : ''}>Confirmada</option>
+                                    <option value="en_proceso" ${appointment.estatus === 'en_proceso' ? 'selected' : ''}>En proceso</option>
+                                    <option value="lista" ${appointment.estatus === 'lista' ? 'selected' : ''}>Lista</option>
+                                    <option value="entregada" ${appointment.estatus === 'entregada' ? 'selected' : ''}>Entregada</option>
+                                    <option value="cancelada" ${appointment.estatus === 'cancelada' ? 'selected' : ''}>Cancelada</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">KM ingreso</label>
+                                <input
+                                    type="number"
+                                    name="km_ingreso"
+                                    class="w-full border rounded px-4 py-2"
+                                    value="${appointment.km_ingreso ?? ''}"
+                                    placeholder="12000"
+                                >
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Total estimado</label>
+                                <input
+                                    type="number"
+                                    step="0.01"
+                                    name="total_estimado"
+                                    class="w-full border rounded px-4 py-2"
+                                    value="${appointment.total_estimado ?? 0}"
+                                    placeholder="0.00"
+                                >
+                            </div>
+
+                            <div class="flex items-end">
+                                <button
+                                    type="submit"
+                                    class="w-full bg-black text-white py-2 rounded font-bold hover:bg-gray-800 transition"
+                                >
+                                    Guardar cambios
+                                </button>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Diagnóstico</label>
+                            <textarea
+                                name="diagnostico"
+                                class="w-full border rounded px-4 py-2"
+                                rows="3"
+                                placeholder="Describe el diagnóstico"
+                            >${appointment.diagnostico ?? ''}</textarea>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Nueva nota</label>
+                            <textarea
+                                name="nota"
+                                class="w-full border rounded px-4 py-2"
+                                rows="3"
+                                placeholder="Agrega una nota de seguimiento"
+                            ></textarea>
+                        </div>
+
+                        <label class="flex items-center gap-2 text-sm text-gray-700">
+                            <input type="checkbox" name="visible_para_cliente">
+                            Hacer esta nota visible para el cliente
+                        </label>
+                    </form>
+
+                    <div class="mt-5">
+                        <p class="font-semibold text-gray-700 mb-2">Historial / bitácora</p>
+                        ${
+                            logs.length > 0
+                                ? `<div class="space-y-3">
+                                    ${logs.map(log => `
+                                        <div class="border rounded-lg p-3 bg-gray-50">
+                                            <p class="text-sm text-gray-800">${log.nota}</p>
+                                            <p class="text-xs text-gray-500 mt-1">
+                                                ${log.estatus_nuevo ? `Estatus: ${formatStatus(log.estatus_nuevo)} | ` : ''}
+                                                ${log.visible_para_cliente ? 'Visible para cliente' : 'Solo interno'} |
+                                                ${formatDate(log.created_at)}
+                                            </p>
+                                        </div>
+                                    `).join('')}
+                                   </div>`
+                                : `<p class="text-sm text-gray-500">No hay notas registradas todavía.</p>`
+                        }
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderAppointmentCards(appointments, targetElement) {
+            if (!appointments || appointments.length === 0) {
+                targetElement.innerHTML = `
+                    <div class="border rounded-lg p-5 bg-gray-50">
+                        <p class="text-gray-500">No hay órdenes en esta pestaña.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            targetElement.innerHTML = appointments.map(buildAppointmentCard).join('');
+        }
+
+        function bindMechanicForms() {
+            const forms = document.querySelectorAll('.mechanic-update-form');
+
+            forms.forEach(form => {
+                form.addEventListener('submit', async (event) => {
+                    event.preventDefault();
+
+                    const appointmentId = Number(form.dataset.appointmentId);
+                    const formData = new FormData(form);
+
+                    const payload = {
+                        appointment_id: appointmentId,
+                        estatus: formData.get('estatus'),
+                        diagnostico: formData.get('diagnostico'),
+                        km_ingreso: formData.get('km_ingreso'),
+                        total_estimado: formData.get('total_estimado'),
+                        nota: formData.get('nota'),
+                        visible_para_cliente: formData.get('visible_para_cliente') === 'on'
+                    };
+
+                    showMessage('Guardando cambios...', 'text-blue-600');
+
+                    const result = await updateAppointmentAsMechanic(payload);
+
+                    if (!result.ok) {
+                        console.error(result.error);
+                        showMessage(`No se pudieron guardar los cambios: ${result.error?.message || 'Error desconocido'}`, 'text-red-600');
+                        return;
+                    }
+
+                    showMessage('Cambios guardados correctamente.', 'text-green-600');
+                    await loadAppointments();
+                });
+            });
+        }
+
+        function refreshAppointmentPanels() {
+            const pendingAppointments = allAppointments.filter(a => isPendingStatus(a.estatus));
+            const progressAppointments = allAppointments.filter(a => isProgressStatus(a.estatus));
+            const finalAppointments = allAppointments.filter(a => isFinalStatus(a.estatus));
+
+            renderAppointmentCards(allAppointments, listAll);
+            renderAppointmentCards(pendingAppointments, listPending);
+            renderAppointmentCards(progressAppointments, listProgress);
+            renderAppointmentCards(finalAppointments, listFinal);
+
+            bindMechanicForms();
+            updateCounters();
+        }
+
+        async function loadAppointments() {
+            listAll.innerHTML = `<p class="text-gray-500">Cargando citas...</p>`;
+            listPending.innerHTML = `<p class="text-gray-500">Cargando citas...</p>`;
+            listProgress.innerHTML = `<p class="text-gray-500">Cargando citas...</p>`;
+            listFinal.innerHTML = `<p class="text-gray-500">Cargando citas...</p>`;
+
+            const { appointments, error } = await listMyAssignedAppointments();
+
+            if (error) {
+                console.error(error);
+                listAll.innerHTML = `<p class="text-red-600">No se pudieron cargar las citas asignadas.</p>`;
+                listPending.innerHTML = `<p class="text-red-600">No se pudieron cargar las citas asignadas.</p>`;
+                listProgress.innerHTML = `<p class="text-red-600">No se pudieron cargar las citas asignadas.</p>`;
+                listFinal.innerHTML = `<p class="text-red-600">No se pudieron cargar las citas asignadas.</p>`;
+                return;
+            }
+
+            allAppointments = appointments ?? [];
+            refreshAppointmentPanels();
+        }
+
+        async function loadPage() {
+            try {
+                const { user, error: userError } = await getCurrentUser();
+
+                if (userError || !user) {
+                    window.location.href = 'index.html';
+                    return;
+                }
+
+                const { profile, error: profileError } = await getProfile(user.id);
+
+                if (profileError || !profile) {
+                    console.error('No se encontró el perfil del usuario:', profileError);
+                    showMessage('No se encontró el perfil del usuario.', 'text-red-600');
+                    return;
+                }
+
+                if (profile.activo === false) {
+                    showMessage('Tu usuario está inactivo.', 'text-red-600');
+                    await logout();
+                    window.location.href = 'index.html';
+                    return;
+                }
+
+                if (profile.rol !== 'mecanico') {
+                    const targetPage = getRolePage(profile.rol);
+                    window.location.href = targetPage;
+                    return;
+                }
+
+                currentSession = { user, profile };
+
+                userName.textContent = profile.nombre || 'Usuario';
+                userEmail.textContent = user.email || 'Sin correo';
+                userRole.textContent = profile.rol;
+
+                showMessage('Sesión cargada correctamente.', 'text-green-600');
+
+                await loadAppointments();
+                initMechanicTabs();
+            } catch (error) {
+                console.error('Error al cargar mecánico:', error);
+                showMessage(`Error al cargar mecánico: ${error.message}`, 'text-red-600');
+            }
+        }
+
+        logoutBtn.addEventListener('click', async () => {
+            const { error } = await logout();
+
+            if (error) {
+                showMessage('No se pudo cerrar sesión.', 'text-red-600');
+                return;
+            }
+
+            window.location.href = 'index.html';
+        });
+
+        reloadAppointmentsBtn.addEventListener('click', loadAppointments);
+
+        window.addEventListener('load', loadPage);
+    </script>
+</body>
+</html>

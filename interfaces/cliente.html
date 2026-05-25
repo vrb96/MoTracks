@@ -1,0 +1,1045 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MoTracks - Cliente</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="bg-gray-100 font-sans min-h-screen">
+
+    <nav class="bg-black text-white p-4 shadow-lg">
+        <div class="container mx-auto flex justify-between items-center">
+            <div>
+                <h1 class="text-2xl font-bold tracking-wider text-yellow-500">MOTRACKS</h1>
+                <p class="text-sm text-gray-300">Panel del Cliente</p>
+            </div>
+            <button
+                id="logout-btn"
+                class="bg-red-500 px-4 py-2 rounded font-bold hover:bg-red-600 transition"
+            >
+                Cerrar sesión
+            </button>
+        </div>
+    </nav>
+
+    <main class="container mx-auto p-6 space-y-6">
+        <div class="bg-white rounded-xl shadow-lg p-6">
+            <h2 class="text-3xl font-bold text-gray-800 mb-2">
+                Bienvenido, <span id="user-name">Cargando...</span>
+            </h2>
+            <p class="text-gray-500">Administra tus motos y agenda tus citas.</p>
+            <p class="mt-3 text-sm text-gray-600">Correo: <span id="user-email">Cargando...</span></p>
+            <p class="text-sm text-gray-600">Rol: <span id="user-role">Cargando...</span></p>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-4">
+            <div class="bg-white rounded-xl shadow p-5">
+                <p class="text-sm text-gray-500">Mis motos</p>
+                <p id="count-motorcycles" class="text-3xl font-bold text-gray-800">0</p>
+            </div>
+            <div class="bg-white rounded-xl shadow p-5">
+                <p class="text-sm text-gray-500">Mis citas</p>
+                <p id="count-appointments" class="text-3xl font-bold text-gray-800">0</p>
+            </div>
+            <div class="bg-white rounded-xl shadow p-5">
+                <p class="text-sm text-gray-500">Citas pendientes</p>
+                <p id="count-pending" class="text-3xl font-bold text-gray-800">0</p>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-lg p-4">
+            <div class="flex flex-wrap items-center gap-3 justify-between">
+                <div class="flex flex-wrap gap-3">
+                    <button type="button" class="client-tab-btn bg-black text-white px-4 py-2 rounded font-bold" data-tab="motos">
+                        Mis motos
+                    </button>
+                    <button type="button" class="client-tab-btn bg-gray-200 text-gray-800 px-4 py-2 rounded font-bold" data-tab="agendar">
+                        Agendar cita
+                    </button>
+                    <button type="button" class="client-tab-btn bg-gray-200 text-gray-800 px-4 py-2 rounded font-bold" data-tab="citas">
+                        Mis citas
+                    </button>
+                </div>
+
+                <button
+                    id="reload-client-data-btn"
+                    class="bg-yellow-500 text-black px-4 py-2 rounded font-bold hover:bg-yellow-600 transition"
+                >
+                    Recargar
+                </button>
+            </div>
+        </div>
+
+        <div id="tab-motos" class="client-tab-panel bg-white rounded-xl shadow-lg p-6">
+            <div class="grid lg:grid-cols-2 gap-6">
+                <div>
+                    <h3 class="text-2xl font-bold text-gray-800 mb-4">Registrar / editar moto</h3>
+
+                    <form id="motorcycle-form" class="space-y-4">
+                        <div class="grid md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Marca</label>
+                                <select id="moto-brand" class="w-full border rounded px-4 py-2" required>
+                                    <option value="">Selecciona una marca</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Modelo</label>
+                                <select id="moto-model" class="w-full border rounded px-4 py-2" required disabled>
+                                    <option value="">Primero elige una marca</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="grid md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Versión</label>
+                                <select id="moto-version" class="w-full border rounded px-4 py-2" required disabled>
+                                    <option value="">Primero elige un modelo</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Color</label>
+                                <select id="moto-color" class="w-full border rounded px-4 py-2" required>
+                                    <option value="">Selecciona un color</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="grid md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Placas</label>
+                                <input type="text" id="moto-placas" class="w-full border rounded px-4 py-2" placeholder="ABC123A">
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Kilometraje</label>
+                                <input type="number" id="moto-kilometraje" class="w-full border rounded px-4 py-2" placeholder="12000">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Notas</label>
+                            <textarea id="moto-notas" class="w-full border rounded px-4 py-2" rows="3" placeholder="Detalles adicionales"></textarea>
+                        </div>
+
+                        <div class="grid md:grid-cols-2 gap-3">
+                            <button
+                                type="submit"
+                                id="save-motorcycle-btn"
+                                class="w-full bg-black text-white py-3 rounded font-bold hover:bg-gray-800 transition"
+                            >
+                                Guardar moto
+                            </button>
+
+                            <button
+                                type="button"
+                                id="cancel-edit-motorcycle-btn"
+                                class="w-full bg-gray-300 text-gray-800 py-3 rounded font-bold hover:bg-gray-400 transition hidden"
+                            >
+                                Cancelar edición
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <div>
+                    <h3 class="text-2xl font-bold text-gray-800 mb-4">Mis motos</h3>
+                    <div id="motorcycles-list" class="space-y-3">
+                        <p class="text-gray-500">Cargando motos...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="tab-agendar" class="client-tab-panel hidden bg-white rounded-xl shadow-lg p-6">
+            <h3 class="text-2xl font-bold text-gray-800 mb-4">Agendar cita</h3>
+
+            <form id="appointment-form" class="space-y-4">
+                <div class="grid lg:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Selecciona tu moto</label>
+                        <select id="appointment-motorcycle" class="w-full border rounded px-4 py-2" required>
+                            <option value="">Selecciona una moto</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Fecha y hora</label>
+                        <input type="datetime-local" id="appointment-date" class="w-full border rounded px-4 py-2" required>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Servicios</label>
+                    <div id="services-list" class="grid md:grid-cols-2 gap-3">
+                        <p class="text-gray-500">Cargando servicios...</p>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Observaciones</label>
+                    <textarea id="appointment-notes" class="w-full border rounded px-4 py-2" rows="3" placeholder="Describe el problema o servicio que necesitas"></textarea>
+                </div>
+
+                <button type="submit" class="w-full bg-yellow-500 text-black py-3 rounded font-bold hover:bg-yellow-600 transition">
+                    Agendar cita
+                </button>
+            </form>
+        </div>
+
+        <div id="tab-citas" class="client-tab-panel hidden bg-white rounded-xl shadow-lg p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-2xl font-bold text-gray-800">Mis citas</h3>
+                <button id="reload-appointments-btn" class="bg-black text-white px-4 py-2 rounded hover:bg-gray-800 transition">
+                    Recargar citas
+                </button>
+            </div>
+
+            <div id="appointments-list" class="space-y-4">
+                <p class="text-gray-500">Cargando citas...</p>
+            </div>
+        </div>
+
+        <p id="message" class="text-center text-sm font-medium"></p>
+    </main>
+
+    <script type="module">
+        import { getCurrentUser, getProfile, getRolePage, logout } from '../js/auth.js';
+        import {
+            listMyMotorcycles,
+            createMotorcycle,
+            updateMyMotorcycle,
+            deleteMyMotorcycle,
+            listBrands,
+            listModelsByBrand,
+            listVersionsByModel,
+            listColors,
+            listActiveServices,
+            createAppointment,
+            listMyAppointments
+        } from '../js/client-data.js';
+
+        const userName = document.getElementById('user-name');
+        const userEmail = document.getElementById('user-email');
+        const userRole = document.getElementById('user-role');
+        const logoutBtn = document.getElementById('logout-btn');
+        const reloadClientDataBtn = document.getElementById('reload-client-data-btn');
+        const reloadAppointmentsBtn = document.getElementById('reload-appointments-btn');
+        const motorcycleForm = document.getElementById('motorcycle-form');
+        const appointmentForm = document.getElementById('appointment-form');
+        const motorcyclesList = document.getElementById('motorcycles-list');
+        const motorcycleSelect = document.getElementById('appointment-motorcycle');
+        const servicesList = document.getElementById('services-list');
+        const appointmentsList = document.getElementById('appointments-list');
+        const message = document.getElementById('message');
+
+        const brandSelect = document.getElementById('moto-brand');
+        const modelSelect = document.getElementById('moto-model');
+        const versionSelect = document.getElementById('moto-version');
+        const colorSelect = document.getElementById('moto-color');
+
+        const countMotorcycles = document.getElementById('count-motorcycles');
+        const countAppointments = document.getElementById('count-appointments');
+        const countPending = document.getElementById('count-pending');
+
+        const saveMotorcycleBtn = document.getElementById('save-motorcycle-btn');
+        const cancelEditMotorcycleBtn = document.getElementById('cancel-edit-motorcycle-btn');
+        const appointmentDateInput = document.getElementById('appointment-date');
+
+        let cachedMotorcycles = [];
+        let cachedAppointments = [];
+        let editingMotorcycleId = null;
+
+        function showMessage(text, colorClass) {
+            message.textContent = text;
+            message.className = `text-center text-sm font-medium ${colorClass}`;
+        }
+
+        function showClientTab(tabName) {
+            const panels = document.querySelectorAll('.client-tab-panel');
+            const buttons = document.querySelectorAll('.client-tab-btn');
+
+            panels.forEach(panel => panel.classList.add('hidden'));
+
+            buttons.forEach(button => {
+                button.classList.remove('bg-black', 'text-white');
+                button.classList.add('bg-gray-200', 'text-gray-800');
+            });
+
+            const activePanel = document.getElementById(`tab-${tabName}`);
+            const activeButton = document.querySelector(`.client-tab-btn[data-tab="${tabName}"]`);
+
+            if (activePanel) activePanel.classList.remove('hidden');
+            if (activeButton) {
+                activeButton.classList.remove('bg-gray-200', 'text-gray-800');
+                activeButton.classList.add('bg-black', 'text-white');
+            }
+
+            localStorage.setItem('clientActiveTab', tabName);
+        }
+
+        function initClientTabs() {
+            const buttons = document.querySelectorAll('.client-tab-btn');
+
+            buttons.forEach(button => {
+                button.addEventListener('click', () => {
+                    showClientTab(button.dataset.tab);
+                });
+            });
+
+            const savedTab = localStorage.getItem('clientActiveTab') || 'motos';
+            showClientTab(savedTab);
+        }
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleString('es-MX', {
+                dateStyle: 'medium',
+                timeStyle: 'short'
+            });
+        }
+
+        function formatStatus(status) {
+            const map = {
+                pendiente: 'Pendiente',
+                confirmada: 'Confirmada',
+                en_proceso: 'En proceso',
+                lista: 'Lista',
+                entregada: 'Entregada',
+                cancelada: 'Cancelada'
+            };
+
+            return map[status] || status;
+        }
+
+        function resetModelSelect() {
+            modelSelect.innerHTML = `<option value="">Primero elige una marca</option>`;
+            modelSelect.disabled = true;
+        }
+
+        function resetVersionSelect() {
+            versionSelect.innerHTML = `<option value="">Primero elige un modelo</option>`;
+            versionSelect.disabled = true;
+        }
+
+        function updateCounters() {
+            countMotorcycles.textContent = cachedMotorcycles.length;
+            countAppointments.textContent = cachedAppointments.length;
+            countPending.textContent = cachedAppointments.filter(a => ['pendiente', 'confirmada', 'en_proceso'].includes(a.estatus)).length;
+        }
+
+        function setMotorcycleFormMode(isEdit) {
+            if (isEdit) {
+                saveMotorcycleBtn.textContent = 'Actualizar moto';
+                cancelEditMotorcycleBtn.classList.remove('hidden');
+            } else {
+                saveMotorcycleBtn.textContent = 'Guardar moto';
+                cancelEditMotorcycleBtn.classList.add('hidden');
+            }
+        }
+
+        function resetMotorcycleForm() {
+            editingMotorcycleId = null;
+            motorcycleForm.reset();
+            resetModelSelect();
+            resetVersionSelect();
+            setMotorcycleFormMode(false);
+        }
+
+        async function startEditMotorcycle(motoId) {
+            const moto = cachedMotorcycles.find(item => Number(item.id) === Number(motoId));
+
+            if (!moto) {
+                showMessage('No se encontró la moto a editar.', 'text-red-600');
+                return;
+            }
+
+            editingMotorcycleId = moto.id;
+            setMotorcycleFormMode(true);
+
+            brandSelect.value = moto.brand_id ?? '';
+
+            resetModelSelect();
+            resetVersionSelect();
+
+            if (moto.brand_id) {
+                const { models, error: modelsError } = await listModelsByBrand(Number(moto.brand_id));
+
+                if (modelsError) {
+                    console.error(modelsError);
+                    showMessage(`No se pudieron cargar los modelos: ${modelsError.message}`, 'text-red-600');
+                    return;
+                }
+
+                renderModels(models);
+                modelSelect.value = moto.model_id ?? '';
+            }
+
+            if (moto.model_id) {
+                const { versions, error: versionsError } = await listVersionsByModel(Number(moto.model_id));
+
+                if (versionsError) {
+                    console.error(versionsError);
+                    showMessage(`No se pudieron cargar las versiones: ${versionsError.message}`, 'text-red-600');
+                    return;
+                }
+
+                renderVersions(versions);
+                versionSelect.value = moto.version_id ?? '';
+            }
+
+            colorSelect.value = moto.color_id ?? '';
+            document.getElementById('moto-placas').value = moto.placas ?? '';
+            document.getElementById('moto-kilometraje').value = moto.kilometraje ?? '';
+            document.getElementById('moto-notas').value = moto.notas ?? '';
+
+            showMessage('Editando moto. Realiza los cambios y guarda.', 'text-blue-600');
+            showClientTab('motos');
+        }
+
+        function bindEditMotorcycleButtons() {
+            const buttons = document.querySelectorAll('.edit-motorcycle-btn');
+
+            buttons.forEach(button => {
+                button.addEventListener('click', async () => {
+                    const motorcycleId = Number(button.dataset.motorcycleId);
+                    await startEditMotorcycle(motorcycleId);
+                });
+            });
+        }
+
+        function bindDeleteMotorcycleButtons() {
+            const buttons = document.querySelectorAll('.delete-motorcycle-btn');
+
+            buttons.forEach(button => {
+                button.addEventListener('click', async () => {
+                    const motorcycleId = Number(button.dataset.motorcycleId);
+
+                    const confirmDelete = confirm('¿Seguro que quieres eliminar esta moto?');
+
+                    if (!confirmDelete) return;
+
+                    button.disabled = true;
+                    button.textContent = 'Eliminando...';
+
+                    const result = await deleteMyMotorcycle(motorcycleId);
+
+                    if (!result.ok) {
+                        console.error(result.error);
+                        showMessage(`No se pudo eliminar la moto: ${result.error?.message || 'Error desconocido'}`, 'text-red-600');
+                        button.disabled = false;
+                        button.textContent = 'Eliminar';
+                        return;
+                    }
+
+                    if (editingMotorcycleId === motorcycleId) {
+                        resetMotorcycleForm();
+                    }
+
+                    showMessage('Moto eliminada correctamente.', 'text-green-600');
+                    await loadMotorcycles();
+                });
+            });
+        }
+
+        function renderBrands(brands) {
+            brandSelect.innerHTML = `
+                <option value="">Selecciona una marca</option>
+                ${brands.map(brand => `
+                    <option value="${brand.id}">${brand.nombre}</option>
+                `).join('')}
+            `;
+        }
+
+        function renderModels(models) {
+            if (!models.length) {
+                modelSelect.innerHTML = `<option value="">No hay modelos disponibles</option>`;
+                modelSelect.disabled = true;
+                return;
+            }
+
+            modelSelect.disabled = false;
+            modelSelect.innerHTML = `
+                <option value="">Selecciona un modelo</option>
+                ${models.map(model => `
+                    <option value="${model.id}">${model.nombre}</option>
+                `).join('')}
+            `;
+        }
+
+        function renderVersions(versions) {
+            if (!versions.length) {
+                versionSelect.innerHTML = `<option value="">No hay versiones disponibles</option>`;
+                versionSelect.disabled = true;
+                return;
+            }
+
+            versionSelect.disabled = false;
+            versionSelect.innerHTML = `
+                <option value="">Selecciona una versión</option>
+                ${versions.map(version => `
+                    <option value="${version.id}">
+                        ${version.anio} - ${version.cilindrada}cc
+                    </option>
+                `).join('')}
+            `;
+        }
+
+        function renderColors(colors) {
+            colorSelect.innerHTML = `
+                <option value="">Selecciona un color</option>
+                ${colors.map(color => `
+                    <option value="${color.id}">${color.nombre}</option>
+                `).join('')}
+            `;
+        }
+
+        function renderMotorcycles(motorcycles) {
+            cachedMotorcycles = motorcycles;
+            updateCounters();
+
+            if (!motorcycles || motorcycles.length === 0) {
+                motorcyclesList.innerHTML = `
+                    <div class="border rounded-lg p-4 bg-gray-50">
+                        <p class="text-gray-500">Todavía no has registrado motos.</p>
+                    </div>
+                `;
+                motorcycleSelect.innerHTML = `<option value="">Primero registra una moto</option>`;
+                return;
+            }
+
+            motorcyclesList.innerHTML = motorcycles.map(moto => {
+                const brand = moto.motorcycle_brands?.nombre ?? 'Sin marca';
+                const model = moto.motorcycle_models?.nombre ?? 'Sin modelo';
+                const version = moto.motorcycle_versions
+                    ? `${moto.motorcycle_versions.anio} - ${moto.motorcycle_versions.cilindrada}cc`
+                    : 'Sin versión';
+                const color = moto.colors?.nombre ?? 'Sin color';
+
+                return `
+                    <div class="border rounded-lg p-4">
+                        <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+                            <div>
+                                <p class="font-bold text-gray-800">${brand} ${model}</p>
+                                <p class="text-sm text-gray-600">${version}</p>
+                                <p class="text-sm text-gray-600">
+                                    Placas: ${moto.placas ?? '—'} | Color: ${color}
+                                </p>
+                                <p class="text-sm text-gray-600">
+                                    Kilometraje: ${moto.kilometraje ?? '—'}
+                                </p>
+                            </div>
+
+                            <div class="flex flex-col gap-2">
+                                <button
+                                    type="button"
+                                    class="edit-motorcycle-btn bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
+                                    data-motorcycle-id="${moto.id}"
+                                >
+                                    Editar
+                                </button>
+
+                                <button
+                                    type="button"
+                                    class="delete-motorcycle-btn bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition"
+                                    data-motorcycle-id="${moto.id}"
+                                >
+                                    Eliminar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            motorcycleSelect.innerHTML = `
+                <option value="">Selecciona una moto</option>
+                ${motorcycles.map(moto => {
+                    const brand = moto.motorcycle_brands?.nombre ?? '';
+                    const model = moto.motorcycle_models?.nombre ?? '';
+                    const version = moto.motorcycle_versions
+                        ? ` ${moto.motorcycle_versions.anio} - ${moto.motorcycle_versions.cilindrada}cc`
+                        : '';
+
+                    return `
+                        <option value="${moto.id}">
+                            ${brand} ${model}${version}${moto.placas ? ` - ${moto.placas}` : ''}
+                        </option>
+                    `;
+                }).join('')}
+            `;
+
+            bindEditMotorcycleButtons();
+            bindDeleteMotorcycleButtons();
+        }
+
+        function renderServices(services) {
+            if (!services || services.length === 0) {
+                servicesList.innerHTML = `<p class="text-gray-500">No hay servicios disponibles.</p>`;
+                return;
+            }
+
+            servicesList.innerHTML = services.map(service => `
+                <label class="border rounded-lg p-4 flex items-start gap-3 cursor-pointer hover:bg-gray-50">
+                    <input
+                        type="checkbox"
+                        class="service-checkbox mt-1"
+                        value="${service.id}"
+                        data-price="${service.precio_base}"
+                    >
+                    <div>
+                        <p class="font-bold text-gray-800">${service.nombre}</p>
+                        <p class="text-sm text-gray-600">${service.descripcion ?? 'Sin descripción'}</p>
+                        <p class="text-sm text-gray-500">
+                            ${service.duracion_minutos} min | $${Number(service.precio_base).toFixed(2)}
+                        </p>
+                    </div>
+                </label>
+            `).join('');
+        }
+
+        function renderAppointments(appointments) {
+            cachedAppointments = appointments;
+            updateCounters();
+
+            if (!appointments || appointments.length === 0) {
+                appointmentsList.innerHTML = `
+                    <div class="border rounded-lg p-4 bg-gray-50">
+                        <p class="text-gray-500">Todavía no tienes citas registradas.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            appointmentsList.innerHTML = appointments.map(appointment => {
+                const moto = appointment.motorcycles;
+                const services = appointment.appointment_services || [];
+
+                const brand = moto?.motorcycle_brands?.nombre ?? '';
+                const model = moto?.motorcycle_models?.nombre ?? '';
+                const version = moto?.motorcycle_versions
+                    ? `${moto.motorcycle_versions.anio} - ${moto.motorcycle_versions.cilindrada}cc`
+                    : '';
+
+                return `
+                    <div class="border rounded-xl p-5">
+                        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-3">
+                            <div>
+                                <p class="font-bold text-lg text-gray-800">
+                                    ${brand} ${model}
+                                </p>
+                                <p class="text-sm text-gray-600">
+                                    ${version} | ${moto?.placas ?? 'Sin placas'} | ${formatDate(appointment.fecha_programada)}
+                                </p>
+                            </div>
+
+                            <span class="inline-block bg-blue-100 text-blue-800 px-3 py-1 rounded text-sm w-fit">
+                                ${formatStatus(appointment.estatus)}
+                            </span>
+                        </div>
+
+                        <div class="mb-3">
+                            <p class="font-semibold text-gray-700 mb-1">Servicios:</p>
+                            ${
+                                services.length > 0
+                                    ? `<ul class="list-disc ml-5 text-sm text-gray-600">
+                                        ${services.map(item => `
+                                            <li>
+                                                ${item.service_catalog?.nombre ?? 'Servicio'} x${item.cantidad}
+                                            </li>
+                                        `).join('')}
+                                       </ul>`
+                                    : `<p class="text-sm text-gray-500">Sin servicios asociados.</p>`
+                            }
+                        </div>
+
+                        <div class="text-sm text-gray-600">
+                            <p><span class="font-semibold">Observaciones:</span> ${appointment.observaciones_cliente ?? 'Sin observaciones'}</p>
+                            <p><span class="font-semibold">Diagnóstico:</span> ${appointment.diagnostico ?? 'Pendiente'}</p>
+                            <p><span class="font-semibold">Total estimado:</span> $${Number(appointment.total_estimado ?? 0).toFixed(2)}</p>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function loadBrands() {
+            const { brands, error } = await listBrands();
+
+            if (error) {
+                console.error(error);
+                showMessage(`No se pudieron cargar las marcas: ${error.message}`, 'text-red-600');
+                return;
+            }
+
+            renderBrands(brands);
+        }
+
+        async function loadColors() {
+            const { colors, error } = await listColors();
+
+            if (error) {
+                console.error(error);
+                showMessage(`No se pudieron cargar los colores: ${error.message}`, 'text-red-600');
+                return;
+            }
+
+            renderColors(colors);
+        }
+
+        async function loadMotorcycles() {
+            const { motorcycles, error } = await listMyMotorcycles();
+
+            if (error) {
+                motorcyclesList.innerHTML = `<p class="text-red-600">No se pudieron cargar las motos.</p>`;
+                return;
+            }
+
+            renderMotorcycles(motorcycles);
+        }
+
+        async function loadServices() {
+            const { services, error } = await listActiveServices();
+
+            if (error) {
+                servicesList.innerHTML = `<p class="text-red-600">No se pudieron cargar los servicios.</p>`;
+                return;
+            }
+
+            renderServices(services);
+        }
+
+        async function loadAppointments() {
+            appointmentsList.innerHTML = `<p class="text-gray-500">Cargando citas...</p>`;
+
+            const { appointments, error } = await listMyAppointments();
+
+            if (error) {
+                appointmentsList.innerHTML = `<p class="text-red-600">No se pudieron cargar las citas.</p>`;
+                return;
+            }
+
+            renderAppointments(appointments);
+        }
+
+        async function reloadAllClientData() {
+            await Promise.all([
+                loadBrands(),
+                loadColors(),
+                loadMotorcycles(),
+                loadServices(),
+                loadAppointments()
+            ]);
+        }
+
+        brandSelect.addEventListener('change', async () => {
+            const brandId = brandSelect.value;
+
+            resetModelSelect();
+            resetVersionSelect();
+
+            if (!brandId) return;
+
+            const { models, error } = await listModelsByBrand(Number(brandId));
+
+            if (error) {
+                console.error(error);
+                showMessage(`No se pudieron cargar los modelos: ${error.message}`, 'text-red-600');
+                return;
+            }
+
+            renderModels(models);
+        });
+
+        modelSelect.addEventListener('change', async () => {
+            const modelId = modelSelect.value;
+
+            resetVersionSelect();
+
+            if (!modelId) return;
+
+            const { versions, error } = await listVersionsByModel(Number(modelId));
+
+            if (error) {
+                console.error(error);
+                showMessage(`No se pudieron cargar las versiones: ${error.message}`, 'text-red-600');
+                return;
+            }
+
+            renderVersions(versions);
+        });
+
+        motorcycleForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            const payload = {
+                id: editingMotorcycleId,
+                brand_id: Number(brandSelect.value),
+                model_id: Number(modelSelect.value),
+                version_id: Number(versionSelect.value),
+                color_id: Number(colorSelect.value),
+                placas: document.getElementById('moto-placas').value.trim(),
+                kilometraje: document.getElementById('moto-kilometraje').value || null,
+                notas: document.getElementById('moto-notas').value.trim()
+            };
+
+            if (!payload.brand_id || !payload.model_id || !payload.version_id || !payload.color_id) {
+                showMessage('Selecciona marca, modelo, versión y color.', 'text-red-600');
+                return;
+            }
+
+            if (editingMotorcycleId) {
+                showMessage('Actualizando moto...', 'text-blue-600');
+
+                const result = await updateMyMotorcycle(payload);
+
+                if (!result.ok) {
+                    console.error(result.error);
+                    showMessage(`No se pudo actualizar la moto: ${result.error?.message || 'Error desconocido'}`, 'text-red-600');
+                    return;
+                }
+
+                resetMotorcycleForm();
+                showMessage('Moto actualizada correctamente.', 'text-green-600');
+                await loadMotorcycles();
+                return;
+            }
+
+            showMessage('Guardando moto...', 'text-blue-600');
+
+            const { error } = await createMotorcycle(payload);
+
+            if (error) {
+                console.error(error);
+                showMessage(`No se pudo guardar la moto: ${error.message}`, 'text-red-600');
+                return;
+            }
+
+            resetMotorcycleForm();
+            showMessage('Moto registrada correctamente.', 'text-green-600');
+            await loadMotorcycles();
+        });
+
+        cancelEditMotorcycleBtn.addEventListener('click', () => {
+            resetMotorcycleForm();
+            showMessage('Edición cancelada.', 'text-gray-600');
+        });
+
+        appointmentForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            const motorcycleId = motorcycleSelect.value;
+            const appointmentDate = document.getElementById('appointment-date').value;
+            const notes = document.getElementById('appointment-notes').value.trim();
+
+            const selectedServices = Array.from(document.querySelectorAll('.service-checkbox:checked')).map(input => ({
+                id: input.value,
+                cantidad: 1,
+                precio_base: input.dataset.price
+            }));
+
+            if (!motorcycleId) {
+                showMessage('Selecciona una moto.', 'text-red-600');
+                return;
+            }
+
+            if (!appointmentDate) {
+                showMessage('Selecciona fecha y hora.', 'text-red-600');
+                return;
+            }
+
+            if (selectedServices.length === 0) {
+                showMessage('Selecciona al menos un servicio.', 'text-red-600');
+                return;
+            }
+
+            showMessage('Agendando cita...', 'text-blue-600');
+
+            const { error } = await createAppointment({
+                motorcycle_id: Number(motorcycleId),
+                fecha_programada: appointmentDate,
+                observaciones_cliente: notes,
+                services: selectedServices
+            });
+
+            if (error) {
+                console.error(error);
+                showMessage(`No se pudo agendar la cita: ${error.message}`, 'text-red-600');
+                return;
+            }
+
+            appointmentForm.reset();
+            showMessage('Cita agendada correctamente.', 'text-green-600');
+            await loadAppointments();
+            showClientTab('citas');
+        });
+
+        reloadAppointmentsBtn.addEventListener('click', loadAppointments);
+        reloadClientDataBtn.addEventListener('click', reloadAllClientData);
+
+        logoutBtn.addEventListener('click', async () => {
+            const { error } = await logout();
+
+            if (error) {
+                showMessage('No se pudo cerrar sesión.', 'text-red-600');
+                return;
+            }
+
+            window.location.href = 'index.html';
+        });
+
+        async function loadPage() {
+            try {
+                const { user, error: userError } = await getCurrentUser();
+
+                if (userError || !user) {
+                    window.location.href = 'index.html';
+                    return;
+                }
+
+                const { profile, error: profileError } = await getProfile(user.id);
+
+                if (profileError || !profile) {
+                    console.error('No se encontró el perfil del usuario:', profileError);
+                    showMessage('No se encontró el perfil del usuario.', 'text-red-600');
+                    return;
+                }
+
+                if (profile.activo === false) {
+                    showMessage('Tu usuario está inactivo.', 'text-red-600');
+                    await logout();
+                    window.location.href = 'index.html';
+                    return;
+                }
+
+                if (profile.rol !== 'cliente') {
+                    const targetPage = getRolePage(profile.rol);
+                    window.location.href = targetPage;
+                    return;
+                }
+
+                userName.textContent = profile.nombre || 'Usuario';
+                userEmail.textContent = user.email || 'Sin correo';
+                userRole.textContent = profile.rol;
+
+                showMessage('Sesión cargada correctamente.', 'text-green-600');
+                setAppointmentInputRules();
+
+                await reloadAllClientData();
+                initClientTabs();
+                setMotorcycleFormMode(false);
+            } catch (error) {
+                console.error('Error al cargar cliente:', error);
+                showMessage(`Error al cargar cliente: ${error.message}`, 'text-red-600');
+            }
+        }
+
+        const BUSINESS_DAYS = [1, 2, 3, 4, 5, 6]; // lunes a sábado
+const OPEN_HOUR = 9;                       // 09:00
+const CLOSE_HOUR = 18;                     // 18:00
+const APPOINTMENT_INTERVAL_MINUTES = 30;   // cada 30 min
+
+function pad2(value) {
+    return String(value).padStart(2, '0');
+}
+
+function parseLocalDateTime(value) {
+    if (!value) return null;
+
+    const [datePart, timePart] = value.split('T');
+    if (!datePart || !timePart) return null;
+
+    const [year, month, day] = datePart.split('-').map(Number);
+    const [hour, minute] = timePart.split(':').map(Number);
+
+    return new Date(year, month - 1, day, hour, minute, 0, 0);
+}
+
+function isValidBusinessAppointment(value) {
+    const date = parseLocalDateTime(value);
+
+    if (!date || Number.isNaN(date.getTime())) return false;
+
+    const day = date.getDay(); // 0=domingo, 1=lunes, ..., 6=sábado
+    const totalMinutes = (date.getHours() * 60) + date.getMinutes();
+    const openMinutes = OPEN_HOUR * 60;
+    const closeMinutes = CLOSE_HOUR * 60;
+
+    const validDay = BUSINESS_DAYS.includes(day);
+    const validTime = totalMinutes >= openMinutes && totalMinutes < closeMinutes;
+    const validInterval = date.getMinutes() % APPOINTMENT_INTERVAL_MINUTES === 0;
+
+    return validDay && validTime && validInterval;
+}
+
+function getBusinessAppointmentError(value) {
+    const date = parseLocalDateTime(value);
+
+    if (!date || Number.isNaN(date.getTime())) {
+        return 'Selecciona una fecha y hora válidas.';
+    }
+
+    const day = date.getDay();
+    const totalMinutes = (date.getHours() * 60) + date.getMinutes();
+    const openMinutes = OPEN_HOUR * 60;
+    const closeMinutes = CLOSE_HOUR * 60;
+
+    if (!BUSINESS_DAYS.includes(day)) {
+        return 'Solo se permiten citas de lunes a sábado.';
+    }
+
+    if (totalMinutes < openMinutes || totalMinutes >= closeMinutes) {
+        return 'Solo se permiten citas en horario laboral: de 09:00 a 18:00.';
+    }
+
+    if (date.getMinutes() % APPOINTMENT_INTERVAL_MINUTES !== 0) {
+        return `Las citas deben caer en bloques de ${APPOINTMENT_INTERVAL_MINUTES} minutos.`;
+    }
+
+    return '';
+}
+
+function setAppointmentInputRules() {
+    appointmentDateInput.step = APPOINTMENT_INTERVAL_MINUTES * 60;
+
+    const now = new Date();
+    now.setSeconds(0, 0);
+
+    const minutes = now.getMinutes();
+    const roundedMinutes = Math.ceil(minutes / APPOINTMENT_INTERVAL_MINUTES) * APPOINTMENT_INTERVAL_MINUTES;
+
+    now.setMinutes(roundedMinutes);
+
+    const yyyy = now.getFullYear();
+    const mm = pad2(now.getMonth() + 1);
+    const dd = pad2(now.getDate());
+    const hh = pad2(now.getHours());
+    const min = pad2(now.getMinutes());
+
+    appointmentDateInput.min = `${yyyy}-${mm}-${dd}T${hh}:${min}`;
+}
+
+appointmentDateInput.addEventListener('change', () => {
+    if (!appointmentDateInput.value) return;
+
+    if (!isValidBusinessAppointment(appointmentDate)) {
+    showMessage(getBusinessAppointmentError(appointmentDate), 'text-red-600');
+    return;
+}
+
+    if (!isValidBusinessAppointment(appointmentDateInput.value)) {
+        showMessage(getBusinessAppointmentError(appointmentDateInput.value), 'text-red-600');
+    }
+
+    
+});
+
+        window.addEventListener('load', loadPage);
+    </script>
+</body>
+</html>

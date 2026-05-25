@@ -1,6 +1,7 @@
-import { db } from '../config/supabase.js';
+import { getDb } from '../config/supabase.js';
 
 export async function login(email, password) {
+    const db = await getDb();
     const { data, error } = await db.auth.signInWithPassword({
         email,
         password
@@ -10,6 +11,7 @@ export async function login(email, password) {
 }
 
 export async function registerUser(nombre, email, password) {
+    const db = await getDb();
     const { data, error } = await db.auth.signUp({
         email,
         password,
@@ -25,11 +27,13 @@ export async function registerUser(nombre, email, password) {
 }
 
 export async function logout() {
+    const db = await getDb();
     const { error } = await db.auth.signOut();
     return { error };
 }
 
 export async function getCurrentUser() {
+    const db = await getDb();
     const { data, error } = await db.auth.getUser();
 
     return {
@@ -39,6 +43,7 @@ export async function getCurrentUser() {
 }
 
 export async function getProfile(userId) {
+    const db = await getDb();
     const { data, error } = await db
         .from('profiles')
         .select('nombre, rol, activo, email')
@@ -140,6 +145,7 @@ export async function redirectIfSessionExists() {
 }
 
 export async function listUsers() {
+    const db = await getDb();
     const { data, error } = await db
         .from('profiles')
         .select('id, nombre, email, rol, activo, created_at')
@@ -149,6 +155,7 @@ export async function listUsers() {
 }
 
 export async function updateUserRole(userId, newRole) {
+    const db = await getDb();
     const { data, error } = await db
         .from('profiles')
         .update({ rol: newRole })
@@ -160,6 +167,7 @@ export async function updateUserRole(userId, newRole) {
 }
 
 export async function updateUserStatus(userId, isActive) {
+    const db = await getDb();
     const { data, error } = await db
         .from('profiles')
         .update({ activo: isActive })

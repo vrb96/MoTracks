@@ -1,6 +1,7 @@
-import { db } from '../config/supabase.js';
+import { getDb } from '../config/supabase.js';
 
 export async function listServicesForAdmin() {
+    const db = await getDb();
     const { data, error } = await db
         .from('service_catalog')
         .select('id, nombre, descripcion, duracion_minutos, precio_base, activo, created_at')
@@ -13,6 +14,7 @@ export async function listServicesForAdmin() {
 }
 
 export async function createService(payload) {
+    const db = await getDb();
     const { data, error } = await db
         .from('service_catalog')
         .insert([
@@ -34,6 +36,7 @@ export async function createService(payload) {
 }
 
 export async function updateService(serviceId, payload) {
+    const db = await getDb();
     const { data, error } = await db
         .from('service_catalog')
         .update({
@@ -53,6 +56,7 @@ export async function updateService(serviceId, payload) {
 }
 
 export async function updateServiceStatus(serviceId, isActive) {
+    const db = await getDb();
     const { data, error } = await db
         .from('service_catalog')
         .update({

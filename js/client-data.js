@@ -1,7 +1,8 @@
-import { db } from '../config/supabase.js';
+import { getDb } from '../config/supabase.js';
 import { getCurrentUser } from './auth.js';
 
 export async function listMyMotorcycles() {
+    const db = await getDb();
     const { user, error: userError } = await getCurrentUser();
 
     if (userError || !user) {
@@ -51,6 +52,7 @@ export async function listMyMotorcycles() {
 }
 
 export async function createMotorcycle(payload) {
+    const db = await getDb();
     const { user, error: userError } = await getCurrentUser();
 
     if (userError || !user) {
@@ -81,6 +83,7 @@ export async function createMotorcycle(payload) {
 }
 
 export async function listBrands() {
+    const db = await getDb();
     const { data, error } = await db
         .from('motorcycle_brands')
         .select('id, nombre')
@@ -94,6 +97,7 @@ export async function listBrands() {
 }
 
 export async function listModelsByBrand(brandId) {
+    const db = await getDb();
     const { data, error } = await db
         .from('motorcycle_models')
         .select('id, nombre, brand_id')
@@ -108,6 +112,7 @@ export async function listModelsByBrand(brandId) {
 }
 
 export async function listVersionsByModel(modelId) {
+    const db = await getDb();
     const { data, error } = await db
         .from('motorcycle_versions')
         .select('id, model_id, anio, cilindrada')
@@ -122,6 +127,7 @@ export async function listVersionsByModel(modelId) {
 }
 
 export async function listColors() {
+    const db = await getDb();
     const { data, error } = await db
         .from('colors')
         .select('id, nombre, hex')
@@ -135,6 +141,7 @@ export async function listColors() {
 }
 
 export async function listActiveServices() {
+    const db = await getDb();
     const { data, error } = await db
         .from('service_catalog')
         .select('id, nombre, descripcion, duracion_minutos, precio_base')
@@ -148,6 +155,7 @@ export async function listActiveServices() {
 }
 
 export async function createAppointment(payload) {
+    const db = await getDb();
     const { user, error: userError } = await getCurrentUser();
 
     if (userError || !user) {
@@ -199,6 +207,7 @@ export async function createAppointment(payload) {
 }
 
 export async function listMyAppointments() {
+    const db = await getDb();
     const { user, error: userError } = await getCurrentUser();
 
     if (userError || !user) {
@@ -255,6 +264,7 @@ export async function listMyAppointments() {
 }
 
 export async function deleteMyMotorcycle(motorcycleId) {
+    const db = await getDb();
     const { user, error: userError } = await getCurrentUser();
 
     if (userError || !user) {
@@ -277,6 +287,7 @@ export async function deleteMyMotorcycle(motorcycleId) {
 }
 
 export async function updateMyMotorcycle(payload) {
+    const db = await getDb();
     const { user, error: userError } = await getCurrentUser();
 
     if (userError || !user) {

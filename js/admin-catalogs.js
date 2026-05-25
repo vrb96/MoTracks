@@ -1,6 +1,7 @@
-import { db } from '../config/supabase.js';
+import { getDb } from '../config/supabase.js';
 
 export async function listBrandsForAdmin() {
+    const db = await getDb();
     const { data, error } = await db
         .from('motorcycle_brands')
         .select('id, nombre, activo, created_at')
@@ -10,6 +11,7 @@ export async function listBrandsForAdmin() {
 }
 
 export async function createBrand(nombre) {
+    const db = await getDb();
     const { data, error } = await db
         .from('motorcycle_brands')
         .insert([{ nombre, activo: true }])
@@ -20,6 +22,7 @@ export async function createBrand(nombre) {
 }
 
 export async function updateBrand(brandId, nombre) {
+    const db = await getDb();
     const { data, error } = await db
         .from('motorcycle_brands')
         .update({ nombre })
@@ -31,6 +34,7 @@ export async function updateBrand(brandId, nombre) {
 }
 
 export async function updateBrandStatus(brandId, activo) {
+    const db = await getDb();
     const { data, error } = await db
         .from('motorcycle_brands')
         .update({ activo })
@@ -42,6 +46,7 @@ export async function updateBrandStatus(brandId, activo) {
 }
 
 export async function listModelsForAdmin() {
+    const db = await getDb();
     const { data, error } = await db
         .from('motorcycle_models')
         .select(`
@@ -60,6 +65,7 @@ export async function listModelsForAdmin() {
 }
 
 export async function createModel(payload) {
+    const db = await getDb();
     const { data, error } = await db
         .from('motorcycle_models')
         .insert([
@@ -76,6 +82,7 @@ export async function createModel(payload) {
 }
 
 export async function updateModel(modelId, payload) {
+    const db = await getDb();
     const { data, error } = await db
         .from('motorcycle_models')
         .update({
@@ -90,6 +97,7 @@ export async function updateModel(modelId, payload) {
 }
 
 export async function updateModelStatus(modelId, activo) {
+    const db = await getDb();
     const { data, error } = await db
         .from('motorcycle_models')
         .update({ activo })
@@ -101,6 +109,7 @@ export async function updateModelStatus(modelId, activo) {
 }
 
 export async function listVersionsForAdmin() {
+    const db = await getDb();
     const { data, error } = await db
         .from('motorcycle_versions')
         .select(`
@@ -125,6 +134,7 @@ export async function listVersionsForAdmin() {
 }
 
 export async function createVersion(payload) {
+    const db = await getDb();
     const { data, error } = await db
         .from('motorcycle_versions')
         .insert([
@@ -142,6 +152,7 @@ export async function createVersion(payload) {
 }
 
 export async function updateVersion(versionId, payload) {
+    const db = await getDb();
     const { data, error } = await db
         .from('motorcycle_versions')
         .update({
@@ -157,6 +168,7 @@ export async function updateVersion(versionId, payload) {
 }
 
 export async function updateVersionStatus(versionId, activo) {
+    const db = await getDb();
     const { data, error } = await db
         .from('motorcycle_versions')
         .update({ activo })
@@ -168,6 +180,7 @@ export async function updateVersionStatus(versionId, activo) {
 }
 
 export async function listColorsForAdmin() {
+    const db = await getDb();
     const { data, error } = await db
         .from('colors')
         .select('id, nombre, hex, activo, created_at')
@@ -177,6 +190,7 @@ export async function listColorsForAdmin() {
 }
 
 export async function createColor(payload) {
+    const db = await getDb();
     const { data, error } = await db
         .from('colors')
         .insert([
@@ -193,6 +207,7 @@ export async function createColor(payload) {
 }
 
 export async function updateColor(colorId, payload) {
+    const db = await getDb();
     const { data, error } = await db
         .from('colors')
         .update({
@@ -207,6 +222,7 @@ export async function updateColor(colorId, payload) {
 }
 
 export async function updateColorStatus(colorId, activo) {
+    const db = await getDb();
     const { data, error } = await db
         .from('colors')
         .update({ activo })

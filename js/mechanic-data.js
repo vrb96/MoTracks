@@ -1,7 +1,8 @@
-import { db } from '../config/supabase.js';
+import { getDb } from '../config/supabase.js';
 import { getCurrentUser } from './auth.js';
 
 export async function listMyAssignedAppointments() {
+    const db = await getDb();
     const { user, error: userError } = await getCurrentUser();
 
     if (userError || !user) {
@@ -66,6 +67,7 @@ export async function listMyAssignedAppointments() {
 }
 
 export async function updateAppointmentAsMechanic(payload) {
+    const db = await getDb();
     const { user, error: userError } = await getCurrentUser();
 
     if (userError || !user) {

@@ -1,6 +1,7 @@
-import { db } from '../config/supabase.js';
+import { getDb } from '../config/supabase.js';
 
 export async function listActiveMechanics() {
+    const db = await getDb();
     const { data, error } = await db
         .from('profiles')
         .select('id, nombre, email, activo')
@@ -15,6 +16,7 @@ export async function listActiveMechanics() {
 }
 
 export async function listAllAppointmentsForAdmin() {
+    const db = await getDb();
     const { data, error } = await db
         .from('appointments')
         .select(`
@@ -74,6 +76,7 @@ export async function listAllAppointmentsForAdmin() {
 }
 
 export async function assignMechanicToAppointment(appointmentId, mechanicId) {
+    const db = await getDb();
     const payload = {
         mecanico_id: mechanicId || null
     };
